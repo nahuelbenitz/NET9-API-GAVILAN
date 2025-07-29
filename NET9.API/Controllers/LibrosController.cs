@@ -41,7 +41,8 @@ namespace NET9.API.Controllers
             var existeAutor = await _context.Autores.AnyAsync(x => x.Id == libro.AutorId);
             if (!existeAutor)
             {
-                return BadRequest($"EL autor con id {libro.AutorId} no existe");
+                ModelState.AddModelError(nameof(libro.AutorId), $"El autor con id {libro.AutorId} no existe");
+                return ValidationProblem();
             }
 
             _context.Libros.Add(libro);
@@ -61,7 +62,8 @@ namespace NET9.API.Controllers
             var existeAutor = await _context.Autores.AnyAsync(x => x.Id == libro.AutorId);
             if (!existeAutor)
             {
-                return BadRequest($"EL autor con id {libro.AutorId} no existe");
+                ModelState.AddModelError(nameof(libro.AutorId), $"El autor con id {libro.AutorId} no existe");
+                return ValidationProblem();
             }
 
             _context.Update(libro);
