@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NET9.API.Data;
 
@@ -11,9 +12,11 @@ using NET9.API.Data;
 namespace NET9.API.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250805145619_addTablaComentarios")]
+    partial class addTablaComentarios
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -48,24 +51,6 @@ namespace NET9.API.Migrations
                     b.ToTable("Autores");
                 });
 
-            modelBuilder.Entity("NET9.API.Models.AutorLibro", b =>
-                {
-                    b.Property<int>("AutorId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("LibroId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Orden")
-                        .HasColumnType("int");
-
-                    b.HasKey("AutorId", "LibroId");
-
-                    b.HasIndex("LibroId");
-
-                    b.ToTable("AutoresLibros");
-                });
-
             modelBuilder.Entity("NET9.API.Models.Comentario", b =>
                 {
                     b.Property<Guid>("Id")
@@ -97,6 +82,9 @@ namespace NET9.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AutorId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Titulo")
                         .IsRequired()
                         .HasMaxLength(250)
@@ -104,26 +92,9 @@ namespace NET9.API.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AutorId");
+
                     b.ToTable("Libros");
-                });
-
-            modelBuilder.Entity("NET9.API.Models.AutorLibro", b =>
-                {
-                    b.HasOne("NET9.API.Models.Autor", "Autor")
-                        .WithMany("Libros")
-                        .HasForeignKey("AutorId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NET9.API.Models.Libro", "Libro")
-                        .WithMany("Autores")
-                        .HasForeignKey("LibroId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Autor");
-
-                    b.Navigation("Libro");
                 });
 
             modelBuilder.Entity("NET9.API.Models.Comentario", b =>
@@ -137,6 +108,17 @@ namespace NET9.API.Migrations
                     b.Navigation("Libro");
                 });
 
+            modelBuilder.Entity("NET9.API.Models.Libro", b =>
+                {
+                    b.HasOne("NET9.API.Models.Autor", "Autor")
+                        .WithMany("Libros")
+                        .HasForeignKey("AutorId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Autor");
+                });
+
             modelBuilder.Entity("NET9.API.Models.Autor", b =>
                 {
                     b.Navigation("Libros");
@@ -144,8 +126,6 @@ namespace NET9.API.Migrations
 
             modelBuilder.Entity("NET9.API.Models.Libro", b =>
                 {
-                    b.Navigation("Autores");
-
                     b.Navigation("Comentarios");
                 });
 #pragma warning restore 612, 618

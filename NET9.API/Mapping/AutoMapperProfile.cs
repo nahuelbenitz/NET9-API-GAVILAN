@@ -20,13 +20,30 @@ namespace NET9.API.Mapping
 
             CreateMap<AutorPatchDTO, Autor>().ReverseMap();
 
+            CreateMap<LibroCreacionDTO, AutorLibro>()
+                .ForMember(ent => ent.Libro, src => src.MapFrom(dto => new Libro { Titulo = dto.Titulo }))
+                .ReverseMap();
+
+            CreateMap<AutorLibro, LibroDTO>()
+                .ForMember(dto => dto.Id, config => config.MapFrom(ent => ent.LibroId))
+                .ForMember(dto => dto.Titulo, config => config.MapFrom(ent => ent.Libro!.Titulo))
+                .ReverseMap();
+
+            CreateMap<Libro, LibroConAutoresDTO>().ReverseMap();
+
+            CreateMap<AutorLibro, AutorDTO>()
+                .ForMember(dto => dto.Id, config => config.MapFrom(ent => ent.AutorId))
+                .ForMember(dto => dto.NombreCompleto, config => config.MapFrom(ent => ObtenerNombreCompletoAutor(ent.Autor!)))
+                .ReverseMap();
+
             CreateMap<Libro, LibroDTO>().ReverseMap();
+            CreateMap<LibroCreacionDTO, Libro>()
+                .ForMember(ent => ent.Autores, src => src.MapFrom(dto => dto.AutoresIds.Select(id => new AutorLibro { AutorId = id })))
+                .ReverseMap();
 
-            CreateMap<Libro, LibroConAutorDTO>()
-                .ForMember(dest => dest.AutorNombre, src => src.MapFrom(libro => ObtenerNombreCompletoAutor(libro.Autor!)))
-                     .ReverseMap();
-
-            CreateMap<LibroCreacionDTO, Libro>().ReverseMap();
+            CreateMap<Comentario, ComentarioCrearDTO>().ReverseMap();
+            CreateMap<Comentario, ComentarioDTO>().ReverseMap();
+            CreateMap<Comentario, ComentarioPatchDTO>().ReverseMap();
         }
 
         private string ObtenerNombreCompletoAutor(Autor autor)
