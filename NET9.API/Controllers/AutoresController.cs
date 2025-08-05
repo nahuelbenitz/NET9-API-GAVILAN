@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
 using NET9.API.Models;
+using NET9.API.Models.DTOs;
 
 namespace NET9.API.Controllers
 {
@@ -10,20 +13,24 @@ namespace NET9.API.Controllers
     public class AutoresController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public AutoresController(ApplicationDbContext context)
+        public AutoresController(ApplicationDbContext context, IMapper mapper)
         {
             _context = context;
+            _mapper = mapper;
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Autor>> Get()
+        public async Task<IEnumerable<AutorDTO>> Get()
         {
-            return await _context.Autores.ToListAsync();
+            var autores = await _context.Autores.ToListAsync();
+            var autoresDTO = _mapper.Map<IEnumerable<AutorDTO>>(autores);
+            return autoresDTO;
         }
 
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<Autor>> GetById(int id)
+        public async Task<ActionResult<AutorConLibrosDTO>> GetById(int id)
         {
             var autor = await _context.Autores.Include(x => x.Libros).FirstOrDefaultAsync(x => x.Id == id);
 
@@ -32,39 +39,75 @@ namespace NET9.API.Controllers
                 return NotFound();
             }
 
-            return autor;
+            var autorDTO = _mapper.Map<AutorConLibrosDTO>(autor);
+
+            return autorDTO;
         }
 
         [HttpPost]
-        public async Task<ActionResult> Post([FromBody] Autor autor)
+        public async Task<ActionResult> Post([FromBody] AutorCrearDTO autorCrearDTO)
         {
-            if (autor is null)
+            if (autorCrearDTO is null)
             {
                 return BadRequest();
             }
+            var autor = _mapper.Map<Autor>(autorCrearDTO);
             _context.Autores.Add(autor);
             await _context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetById), new { id = autor.Id }, autor);
+            var autorDTO = _mapper.Map<AutorDTO>(autor);
+            return CreatedAtAction(nameof(GetById), new { id = autor.Id }, autorDTO);
         }
 
         [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, [FromBody] Autor autor)
+        public async Task<ActionResult> Put(int id, [FromBody] AutorCrearDTO autorCrearDTO)
         {
-            if (id != autor.Id)
-            {
-                return BadRequest("Los id's son distintos");
-            }
 
-            if(autor is null)
+            if (autorCrearDTO is null)
             {
                 return BadRequest("El autor no puede estar vacio");
             }
+
+            var autor = _mapper.Map<Autor>(autorCrearDTO);
 
             _context.Update(autor);
 
             await _context.SaveChangesAsync();
 
-            return Ok();
+            return NoContent();
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult> Patch(int id, [FromBody] JsonPatchDocument<AutorPatchDTO> patchDocument)
+        {
+            if (patchDocument is null)
+            {
+                return BadRequest("El documento de parcheo no puede estar vacio");
+            }
+            var autor = await _context.Autores.FirstOrDefaultAsync(x => x.Id == id);
+            if (autor is null)
+            {
+                return NotFound();
+            }
+
+            var autorPatchDTO = _mapper.Map<AutorPatchDTO>(autor);
+
+            patchDocument.ApplyTo(autorPatchDTO, ModelState);
+
+            //Otra forma de validar el modelo
+            //if (!ModelState.IsValid)
+            //{
+            //    return ValidationProblem(ModelState);
+            //}
+
+            var esValido = TryValidateModel(autorPatchDTO);
+            if (!esValido)
+            {
+                return ValidationProblem(ModelState);
+            }
+            _mapper.Map(autorPatchDTO, autor);
+
+            await _context.SaveChangesAsync();
+            return NoContent();
         }
 
         [HttpDelete("{id:int}")]
@@ -77,7 +120,7 @@ namespace NET9.API.Controllers
             }
 
             //No usa el Save porque ejecuta el delete directamente en la base de datos
-            return Ok();
+            return NoContent();
         }
     }
 }
