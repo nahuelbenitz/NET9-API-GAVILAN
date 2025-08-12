@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 
 namespace NET9.API.Models
 {
@@ -10,5 +11,7 @@ namespace NET9.API.Models
         public DateTime FechaPublicacion { get; set; }
         public int LibroId { get; set; }
         public Libro? Libro { get; set; }
+        public required string UsuarioID { get; set; }
+        public IdentityUser? Usuario { get; set; }
     }
 }

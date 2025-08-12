@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
@@ -9,6 +10,7 @@ namespace NET9.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class LibrosController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

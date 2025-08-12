@@ -42,7 +42,11 @@ namespace NET9.API.Mapping
                 .ReverseMap();
 
             CreateMap<Comentario, ComentarioCrearDTO>().ReverseMap();
-            CreateMap<Comentario, ComentarioDTO>().ReverseMap();
+
+            CreateMap<Comentario, ComentarioDTO>()
+                .ForMember(dto => dto.UsuarioEmail, config => config.MapFrom(ent => ent.Usuario!.Email))
+                .ReverseMap();
+
             CreateMap<Comentario, ComentarioPatchDTO>().ReverseMap();
         }
 

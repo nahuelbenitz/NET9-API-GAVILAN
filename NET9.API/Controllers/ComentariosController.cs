@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +11,7 @@ namespace NET9.API.Controllers
 {
     [Route("api/libros/{libroId:int}/[controller]")]
     [ApiController]
+    [Authorize]
     public class ComentariosController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -32,6 +33,7 @@ namespace NET9.API.Controllers
             }
 
             var comentarios = await _context.Comentarios
+                .Include(x => x.Usuario)
                 .Where(x => x.LibroId == libroId)
                 .OrderByDescending(x => x.FechaPublicacion)
                 .ToListAsync();
@@ -43,7 +45,9 @@ namespace NET9.API.Controllers
         public async Task<ActionResult<ComentarioDTO>> GetById(Guid id)
         {
             var comentario = await _context.Comentarios
+                .Include(x => x.Usuario)
                 .FirstOrDefaultAsync(x => x.Id == id);
+
             if (comentario is null)
             {
                 return NotFound();
