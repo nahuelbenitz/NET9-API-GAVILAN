@@ -4,7 +4,7 @@ using NET9.API.Models;
 
 namespace NET9.API.Data
 {
-    public class ApplicationDbContext : IdentityDbContext
+    public class ApplicationDbContext : IdentityDbContext<Usuario>
     {
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {

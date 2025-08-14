@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using NET9.API.Models;
 using NET9.API.Models.DTOs;
 using NET9.API.Services.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
@@ -14,12 +15,12 @@ namespace NET9.API.Controllers
     [ApiController]
     public class UsuariosController : ControllerBase
     {
-        private readonly UserManager<IdentityUser> _userManager;
+        private readonly UserManager<Usuario> _userManager;
         private readonly IConfiguration _configuration;
-        private readonly SignInManager<IdentityUser> _signinManager;
+        private readonly SignInManager<Usuario> _signinManager;
         private readonly IUsuarioService _usuarioService;
 
-        public UsuariosController(UserManager<IdentityUser> userManager, IConfiguration configuration, SignInManager<IdentityUser> signinManager, IUsuarioService usuarioService)
+        public UsuariosController(UserManager<Usuario> userManager, IConfiguration configuration, SignInManager<Usuario> signinManager, IUsuarioService usuarioService)
         {
             _userManager = userManager;
             _configuration = configuration;
@@ -30,7 +31,7 @@ namespace NET9.API.Controllers
         [HttpPost("registro")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Registrar(CredencialesUsuariosDTO credencialesDTO)
         {
-            var usuario = new IdentityUser
+            var usuario = new Usuario
             { 
                 UserName = credencialesDTO.Email, 
                 Email = credencialesDTO.Email 
@@ -75,6 +76,24 @@ namespace NET9.API.Controllers
             {
                 return RetornarLoginIncorrecto();
             }
+        }
+
+        [HttpPut]
+        [Authorize]
+        public async Task<ActionResult> Put(ActualizarUsuarioDTO actualizarUsuarioDTO)
+        {
+            var usuario = await _usuarioService.ObtenerUsuario();
+
+            if (usuario is null)
+            {
+                return NotFound();
+            }
+
+            usuario.FechaNacimiento = actualizarUsuarioDTO.FechaNacimiento;
+
+            await _userManager.UpdateAsync(usuario);
+
+            return NoContent();
         }
 
         [HttpGet("renovar-token")]

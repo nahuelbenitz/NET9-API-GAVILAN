@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NET9.API.Data;
+using NET9.API.Models;
 using NET9.API.Services;
 using NET9.API.Services.Interfaces;
 using System.Text;
@@ -24,15 +25,15 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 });
 
 //Configuro Identity
-builder.Services.AddIdentityCore<IdentityUser>()
+builder.Services.AddIdentityCore<Usuario>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
 //Configuro el UserManager
-builder.Services.AddScoped<UserManager<IdentityUser>>();
+builder.Services.AddScoped<UserManager<Usuario>>();
 
 //Manejo de usuarios, registrar usuarios
-builder.Services.AddScoped<SignInManager<IdentityUser>>();
+builder.Services.AddScoped<SignInManager<Usuario>>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
