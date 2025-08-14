@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
 using NET9.API.Models;
 using NET9.API.Models.DTOs;
+using NET9.API.Services.Interfaces;
 using NET9.API.Utilidades;
 
 namespace NET9.API.Controllers
@@ -17,11 +18,14 @@ namespace NET9.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IAlmacenadorArchivo _almacenadorArchivo;
+        private const string contenedor = "autores";
 
-        public AutoresController(ApplicationDbContext context, IMapper mapper)
+        public AutoresController(ApplicationDbContext context, IMapper mapper, IAlmacenadorArchivo almacenadorArchivo)
         {
             _context = context;
             _mapper = mapper;
+            _almacenadorArchivo = almacenadorArchivo;
         }
 
         [HttpGet]
@@ -69,9 +73,39 @@ namespace NET9.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = autor.Id }, autorDTO);
         }
 
-        [HttpPut("{id:int}")]
-        public async Task<ActionResult> Put(int id, [FromBody] AutorCrearDTO autorCrearDTO)
+
+        [HttpPost("con-foto")]
+        public async Task<ActionResult> PostConFoto([FromForm] AutorCreacionConFotoDTO autorCrearDTO)
         {
+            if (autorCrearDTO is null)
+            {
+                return BadRequest();
+            }
+
+            var autor = _mapper.Map<Autor>(autorCrearDTO);
+
+            if(autorCrearDTO.Foto is not null)
+            {
+                var url = await _almacenadorArchivo.Guardar( contenedor, autorCrearDTO.Foto);
+                autor.Foto = url;
+            }
+
+            _context.Autores.Add(autor);
+            await _context.SaveChangesAsync();
+            var autorDTO = _mapper.Map<AutorDTO>(autor);
+            return CreatedAtAction(nameof(GetById), new { id = autor.Id }, autorDTO);
+        }
+
+        [HttpPut("{id:int}")]
+        public async Task<ActionResult> Put(int id, [FromForm] AutorCreacionConFotoDTO autorCrearDTO)
+        {
+
+            var existeAutor = await _context.Autores.AnyAsync(x => x.Id == id);
+
+            if (!existeAutor)
+            {
+                return NotFound();
+            }
 
             if (autorCrearDTO is null)
             {
@@ -79,6 +113,15 @@ namespace NET9.API.Controllers
             }
 
             var autor = _mapper.Map<Autor>(autorCrearDTO);
+            autor.Id = id;
+
+            if (autorCrearDTO.Foto is not null)
+            {
+                var fotoActual = await _context.Autores.Where(x => x.Id == id).Select(x => x.Foto).FirstAsync();
+
+                var url = await _almacenadorArchivo.Editar(contenedor, autorCrearDTO.Foto, fotoActual!);
+                autor.Foto = url;
+            }
 
             _context.Update(autor);
 
@@ -124,11 +167,20 @@ namespace NET9.API.Controllers
         [HttpDelete("{id:int}")]
         public async Task<ActionResult> Delete(int id)
         {
-            var autorBorrado = await _context.Autores.Where(x => x.Id == id).ExecuteDeleteAsync();
-            if (autorBorrado == 0)
+            var autor = await _context.Autores.FirstOrDefaultAsync(x => x.Id == id);
+            if (autor is null)
             {
                 return NotFound();
             }
+            _context.Remove(autor);
+            await _context.SaveChangesAsync();
+            await _almacenadorArchivo.Borrar(autor.Foto, contenedor);
+
+            //var autorBorrado = await _context.Autores.Where(x => x.Id == id).ExecuteDeleteAsync();
+            //if (autorBorrado == 0)
+            //{
+            //    return NotFound();
+            //}
 
             //No usa el Save porque ejecuta el delete directamente en la base de datos
             return NoContent();

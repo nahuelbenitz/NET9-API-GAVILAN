@@ -17,6 +17,8 @@ namespace NET9.API.Mapping
                     .ReverseMap();
 
             CreateMap<AutorCrearDTO, Autor>().ReverseMap();
+            CreateMap<AutorCreacionConFotoDTO, Autor>()
+                .ForMember(ent => ent.Foto, config => config.Ignore());
 
             CreateMap<AutorPatchDTO, Autor>().ReverseMap();
 
