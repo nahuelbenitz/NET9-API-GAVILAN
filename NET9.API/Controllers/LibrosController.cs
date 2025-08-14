@@ -23,6 +23,7 @@ namespace NET9.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IEnumerable<LibroDTO>> Get()
         {
             var libros = await _context.Libros
@@ -34,6 +35,7 @@ namespace NET9.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<ActionResult<LibroConAutoresDTO>> GetById(int id)
         {
             var libro = await _context.Libros

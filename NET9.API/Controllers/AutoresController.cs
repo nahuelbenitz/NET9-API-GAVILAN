@@ -24,6 +24,7 @@ namespace NET9.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IEnumerable<AutorDTO>> Get()
         {
             var autores = await _context.Autores.ToListAsync();
@@ -32,6 +33,7 @@ namespace NET9.API.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public async Task<ActionResult<AutorConLibrosDTO>> GetById(int id)
         {
             var autor = await _context.Autores.Include(x => x.Libros).FirstOrDefaultAsync(x => x.Id == id);

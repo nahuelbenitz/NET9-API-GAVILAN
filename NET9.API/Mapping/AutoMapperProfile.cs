@@ -48,6 +48,8 @@ namespace NET9.API.Mapping
                 .ReverseMap();
 
             CreateMap<Comentario, ComentarioPatchDTO>().ReverseMap();
+
+            CreateMap<Usuario, UsuarioDTO>().ReverseMap();
         }
 
         private string ObtenerNombreCompletoAutor(Autor autor)

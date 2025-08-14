@@ -27,6 +27,7 @@ namespace NET9.API.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult<List<ComentarioDTO>>> Get(int libroId)
         {
             var existeLibro = await _context.Libros.AnyAsync(x => x.Id == libroId);
@@ -45,6 +46,7 @@ namespace NET9.API.Controllers
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult<ComentarioDTO>> GetById(Guid id)
         {
             var comentario = await _context.Comentarios

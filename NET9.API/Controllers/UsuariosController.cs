@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using NET9.API.Data;
 using NET9.API.Models;
 using NET9.API.Models.DTOs;
 using NET9.API.Services.Interfaces;
@@ -19,27 +22,42 @@ namespace NET9.API.Controllers
         private readonly IConfiguration _configuration;
         private readonly SignInManager<Usuario> _signinManager;
         private readonly IUsuarioService _usuarioService;
+        private readonly ApplicationDbContext _context;
+        private readonly IMapper _mapper;
 
-        public UsuariosController(UserManager<Usuario> userManager, IConfiguration configuration, SignInManager<Usuario> signinManager, IUsuarioService usuarioService)
+        public UsuariosController(UserManager<Usuario> userManager, IConfiguration configuration, SignInManager<Usuario> signinManager, IUsuarioService usuarioService, ApplicationDbContext context, IMapper mapper)
         {
             _userManager = userManager;
             _configuration = configuration;
             _signinManager = signinManager;
             _usuarioService = usuarioService;
+            _context = context;
+            _mapper = mapper;
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IEnumerable<UsuarioDTO>> Get()
+        {
+            var usuarios = await _context.Users.ToListAsync();
+
+            var usuariosDTO = _mapper.Map<IEnumerable<UsuarioDTO>>(usuarios);
+
+            return usuariosDTO;
         }
 
         [HttpPost("registro")]
         public async Task<ActionResult<RespuestaAutenticacionDTO>> Registrar(CredencialesUsuariosDTO credencialesDTO)
         {
             var usuario = new Usuario
-            { 
-                UserName = credencialesDTO.Email, 
-                Email = credencialesDTO.Email 
+            {
+                UserName = credencialesDTO.Email,
+                Email = credencialesDTO.Email
             };
 
             var resultado = await _userManager.CreateAsync(usuario, credencialesDTO.Password!);
 
-            if(resultado.Succeeded)
+            if (resultado.Succeeded)
             {
                 var respuestaAutenticacion = await ConstruirToken(credencialesDTO);
 
@@ -69,7 +87,7 @@ namespace NET9.API.Controllers
 
             if (resultado.Succeeded)
             {
-            return await ConstruirToken(credencialesDTO);
+                return await ConstruirToken(credencialesDTO);
 
             }
             else
@@ -120,7 +138,7 @@ namespace NET9.API.Controllers
         public async Task<ActionResult> HacerAdmin(EditarClaimDTO credencialesDTO)
         {
             var usuario = await _userManager.FindByEmailAsync(credencialesDTO.Email!);
-            if(usuario is null)
+            if (usuario is null)
             {
                 return NotFound();
             }
@@ -164,9 +182,9 @@ namespace NET9.API.Controllers
             var creds = new SigningCredentials(llave, SecurityAlgorithms.HmacSha256);
 
             var expiracion = DateTime.UtcNow.AddDays(1);
-            
+
             var token = new JwtSecurityToken(issuer: null, audience: null, claims: claims, expires: expiracion, signingCredentials: creds);
-            
+
             return new RespuestaAutenticacionDTO()
             {
                 Token = new JwtSecurityTokenHandler().WriteToken(token),

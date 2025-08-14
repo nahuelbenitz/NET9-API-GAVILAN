@@ -60,10 +60,20 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("esadmin", policy => policy.RequireClaim("esadmin"));
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+});
+
+builder.Services.AddDataProtection();
+
+
+
+
 builder.Services.AddOpenApi();
-
-
-
 
 var app = builder.Build();
 
@@ -75,6 +85,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseCors();
 
 app.MapControllers();
 
