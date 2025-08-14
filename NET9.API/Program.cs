@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using NET9.API.Data;
 using NET9.API.Models;
 using NET9.API.Services;
 using NET9.API.Services.Interfaces;
+using NET9.API.Swagger;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -70,6 +72,45 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDataProtection();
 
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "NET9 API",
+        Version = "v1",
+        Description = "API para la gestión de libros, autores y comentarios"
+    });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header
+    });
+
+    options.OperationFilter<FiltroAutorizacion>();
+
+    //options.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    //{
+    //  {
+    //    new OpenApiSecurityScheme
+    //    {
+    //      Reference = new OpenApiReference
+    //      {
+    //        Type = ReferenceType.SecurityScheme,
+    //        Id = "Bearer"
+    //      },
+    //      Scheme = "oauth2",
+    //      Name = "Bearer",
+    //      In = ParameterLocation.Header
+    //    },
+    //    new List<string>()
+    //  }
+    //});
+
+});
 
 
 
@@ -80,6 +121,8 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

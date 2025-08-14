@@ -25,6 +25,7 @@ namespace NET9.API.Controllers
 
         [HttpGet]
         [AllowAnonymous]
+        [EndpointSummary("Obtiene una lista de autores")]
         public async Task<IEnumerable<AutorDTO>> Get()
         {
             var autores = await _context.Autores.ToListAsync();
