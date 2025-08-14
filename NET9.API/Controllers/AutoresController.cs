@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
 using NET9.API.Models;
 using NET9.API.Models.DTOs;
+using NET9.API.Utilidades;
 
 namespace NET9.API.Controllers
 {
@@ -26,9 +27,14 @@ namespace NET9.API.Controllers
         [HttpGet]
         [AllowAnonymous]
         [EndpointSummary("Obtiene una lista de autores")]
-        public async Task<IEnumerable<AutorDTO>> Get()
+        public async Task<IEnumerable<AutorDTO>> Get([FromQuery] PaginacionDTO paginacionDTO)
         {
-            var autores = await _context.Autores.ToListAsync();
+            var queryble = _context.Autores.AsQueryable();
+
+            await HttpContext.InsertarParametrosPaginacionEnCabecera(queryble);
+            
+            var autores = await queryble.OrderBy(x => x.Nombres).Paginar(paginacionDTO).ToListAsync();
+
             var autoresDTO = _mapper.Map<IEnumerable<AutorDTO>>(autores);
             return autoresDTO;
         }

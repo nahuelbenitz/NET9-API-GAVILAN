@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
 using NET9.API.Models;
 using NET9.API.Models.DTOs;
+using NET9.API.Utilidades;
 
 namespace NET9.API.Controllers
 {
@@ -24,12 +25,19 @@ namespace NET9.API.Controllers
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IEnumerable<LibroDTO>> Get()
+        public async Task<IEnumerable<LibroDTO>> Get([FromQuery] PaginacionDTO paginacionDTO)
         {
-            var libros = await _context.Libros
+            var queryable = _context.Libros.AsQueryable();
+
+            await HttpContext.InsertarParametrosPaginacionEnCabecera(queryable);
+
+            var libros = await queryable
                 .Include(x => x.Autores)
                 .ThenInclude(x => x.Autor)
+                .OrderBy(x => x.Titulo)
+                .Paginar(paginacionDTO)
                 .ToListAsync();
+
             var librosDTO = _mapper.Map<IEnumerable<LibroDTO>>(libros);
             return librosDTO;
         }
