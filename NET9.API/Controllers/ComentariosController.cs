@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
 using NET9.API.Models;
 using NET9.API.Models.DTOs;
+using NET9.API.Services.Interfaces;
 
 namespace NET9.API.Controllers
 {
@@ -16,11 +17,13 @@ namespace NET9.API.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IUsuarioService _usuarioService;
 
-        public ComentariosController(ApplicationDbContext context, IMapper mapper)
+        public ComentariosController(ApplicationDbContext context, IMapper mapper, IUsuarioService usuarioService)
         {
             _context = context;
             _mapper = mapper;
+            _usuarioService = usuarioService;
         }
 
         [HttpGet]
@@ -65,9 +68,17 @@ namespace NET9.API.Controllers
                 return NotFound($"El libro con id {libroId} no existe");
             }
 
+            var usuario = await _usuarioService.ObtenerUsuario();
+
+            if(usuario is null)
+            {
+                return NotFound();
+            }
+
             var comentario = _mapper.Map<Comentario>(comentarioCrearDTO);
             comentario.LibroId = libroId;
             comentario.FechaPublicacion = DateTime.UtcNow;
+            comentario.UsuarioID = usuario.Id;
 
             _context.Comentarios.Add(comentario);
             await _context.SaveChangesAsync();
@@ -92,10 +103,23 @@ namespace NET9.API.Controllers
                 return NotFound($"El libro con id {libroId} no existe");
             }
 
+            var usuario = await _usuarioService.ObtenerUsuario();
+
+            if (usuario is null)
+            {
+                return NotFound();
+            }
+
+
             var comentario = await _context.Comentarios.FirstOrDefaultAsync(x => x.Id == id);
             if (comentario is null)
             {
                 return NotFound();
+            }
+
+            if (comentario.UsuarioID != usuario.Id)
+            {
+                return Forbid();
             }
 
             var comentarioPatchDTO = _mapper.Map<ComentarioPatchDTO>(comentario);
@@ -122,12 +146,28 @@ namespace NET9.API.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id, int libroId)
         {
-            var comentarioBorrado = await _context.Comentarios.Where(x => x.Id == id).ExecuteDeleteAsync();
-            if (comentarioBorrado == 0)
+            var usuario = await _usuarioService.ObtenerUsuario();
+
+            if (usuario is null)
             {
                 return NotFound();
             }
 
+            var comentario = await _context.Comentarios
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (comentario is null)
+            {
+                return NotFound();
+            }
+
+            if (comentario.UsuarioID != usuario.Id)
+            {
+                return Forbid();
+            }
+
+            _context.Remove(comentario);
+            await _context.SaveChangesAsync();
             //No usa el Save porque ejecuta el delete directamente en la base de datos
             return NoContent();
         }

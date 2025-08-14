@@ -11,7 +11,7 @@ namespace NET9.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    [Authorize(Policy = "esadmin")]
     public class AutoresController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

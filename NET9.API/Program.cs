@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using NET9.API.Data;
+using NET9.API.Services;
+using NET9.API.Services.Interfaces;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +34,8 @@ builder.Services.AddScoped<UserManager<IdentityUser>>();
 //Manejo de usuarios, registrar usuarios
 builder.Services.AddScoped<SignInManager<IdentityUser>>();
 
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+
 //Nos permite inyectar el contexto de la aplicación en los controladores
 builder.Services.AddHttpContextAccessor();
 
@@ -48,6 +52,11 @@ builder.Services.AddAuthentication().AddJwtBearer(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
         ClockSkew = TimeSpan.Zero
     };
+});
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("esadmin", policy => policy.RequireClaim("esadmin"));
 });
 
 builder.Services.AddOpenApi();
