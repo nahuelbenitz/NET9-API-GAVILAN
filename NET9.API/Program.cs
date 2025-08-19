@@ -20,6 +20,16 @@ builder.Services.AddControllers().AddNewtonsoftJson();
 //    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
 //});
 
+//COMENTADO PORQUE AHORA USAMOS REDIS
+//builder.Services.AddOutputCache(options =>
+//{
+//    options.DefaultExpirationTimeSpan = TimeSpan.FromSeconds(15);
+//});
+
+builder.Services.AddStackExchangeRedisOutputCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("redis");
+});
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
@@ -134,6 +144,8 @@ app.UseAuthorization();
 app.UseStaticFiles();
 
 app.UseCors();
+
+app.UseOutputCache();
 
 app.MapControllers();
 

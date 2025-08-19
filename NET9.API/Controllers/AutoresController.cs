@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.EntityFrameworkCore;
 using NET9.API.Data;
 using NET9.API.Models;
@@ -21,19 +22,23 @@ namespace NET9.API.Controllers
         private readonly IMapper _mapper;
         private readonly IAlmacenadorArchivo _almacenadorArchivo;
         private readonly ILogger<AutoresController> _logger;
+        private readonly IOutputCacheStore _outPutCacheStore;
         private const string contenedor = "autores";
+        private const string cache = "autores-cache";
 
-        public AutoresController(ApplicationDbContext context, IMapper mapper, IAlmacenadorArchivo almacenadorArchivo, ILogger<AutoresController> logger)
+        public AutoresController(ApplicationDbContext context, IMapper mapper, IAlmacenadorArchivo almacenadorArchivo, ILogger<AutoresController> logger, IOutputCacheStore outPutCacheStore)
         {
             _context = context;
             _mapper = mapper;
             _almacenadorArchivo = almacenadorArchivo;
             _logger = logger;
+            _outPutCacheStore = outPutCacheStore;
         }
 
         [HttpGet]
         [AllowAnonymous]
         [EndpointSummary("Obtiene una lista de autores")]
+        [OutputCache(Tags = [cache])]
         public async Task<IEnumerable<AutorDTO>> Get([FromQuery] PaginacionDTO paginacionDTO)
         {
             var queryble = _context.Autores.AsQueryable();
@@ -48,6 +53,7 @@ namespace NET9.API.Controllers
 
         [HttpGet("{id:int}")]
         [AllowAnonymous]
+        [OutputCache(Tags = [cache])]
         public async Task<ActionResult<AutorConLibrosDTO>> GetById(int id)
         {
             var autor = await _context.Autores.Include(x => x.Libros).FirstOrDefaultAsync(x => x.Id == id);
@@ -159,6 +165,9 @@ namespace NET9.API.Controllers
             var autor = _mapper.Map<Autor>(autorCrearDTO);
             _context.Autores.Add(autor);
             await _context.SaveChangesAsync();
+
+            await _outPutCacheStore.EvictByTagAsync(cache, default);
+            
             var autorDTO = _mapper.Map<AutorDTO>(autor);
             return CreatedAtAction(nameof(GetById), new { id = autor.Id }, autorDTO);
         }
@@ -182,6 +191,7 @@ namespace NET9.API.Controllers
 
             _context.Autores.Add(autor);
             await _context.SaveChangesAsync();
+            await _outPutCacheStore.EvictByTagAsync(cache, default);
             var autorDTO = _mapper.Map<AutorDTO>(autor);
             return CreatedAtAction(nameof(GetById), new { id = autor.Id }, autorDTO);
         }
@@ -217,6 +227,8 @@ namespace NET9.API.Controllers
 
             await _context.SaveChangesAsync();
 
+            await _outPutCacheStore.EvictByTagAsync(cache, default);
+
             return NoContent();
         }
 
@@ -251,6 +263,7 @@ namespace NET9.API.Controllers
             _mapper.Map(autorPatchDTO, autor);
 
             await _context.SaveChangesAsync();
+            await _outPutCacheStore.EvictByTagAsync(cache, default);
             return NoContent();
         }
 
@@ -264,6 +277,7 @@ namespace NET9.API.Controllers
             }
             _context.Remove(autor);
             await _context.SaveChangesAsync();
+            await _outPutCacheStore.EvictByTagAsync(cache, default);
             await _almacenadorArchivo.Borrar(autor.Foto, contenedor);
 
             //var autorBorrado = await _context.Autores.Where(x => x.Id == id).ExecuteDeleteAsync();

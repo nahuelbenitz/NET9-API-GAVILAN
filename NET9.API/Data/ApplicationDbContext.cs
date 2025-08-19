@@ -10,6 +10,12 @@ namespace NET9.API.Data
         {
         }
 
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+            builder.Entity<Comentario>().HasQueryFilter(x => !x.EstaBorrado);
+        }
+
         public DbSet<Autor> Autores { get; set; }
         public DbSet<Libro> Libros { get; set; }
         public DbSet<Comentario> Comentarios { get; set; }

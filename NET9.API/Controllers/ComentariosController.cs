@@ -168,10 +168,11 @@ namespace NET9.API.Controllers
                 return Forbid();
             }
 
-            _context.Remove(comentario);
+            comentario.EstaBorrado = true;
+            _context.Update(comentario);
             await _context.SaveChangesAsync();
-            //No usa el Save porque ejecuta el delete directamente en la base de datos
             return NoContent();
+            //Cuando se borra con el ExecuteDeleteAsync No usa el Save porque ejecuta el delete directamente en la base de datos
         }
     }
 }
