@@ -38,6 +38,7 @@ builder.Services.AddScoped<UserManager<Usuario>>();
 builder.Services.AddScoped<SignInManager<Usuario>>();
 
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IAlmacenadorArchivo, AlmacenadorLocalService>();
 
 //Nos permite inyectar el contexto de la aplicación en los controladores
 builder.Services.AddHttpContextAccessor();
@@ -129,6 +130,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseStaticFiles();
 
 app.UseCors();
 
